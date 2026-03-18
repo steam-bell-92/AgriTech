@@ -4,30 +4,40 @@ import numpy as np
 from flask import Flask, render_template, request, jsonify, flash
 from functools import wraps
 from dataclasses import dataclass
+import joblib
+from pathlib import Path
 
 app = Flask(__name__)
 app.secret_key = "super_secret_agricultural_key" # Required for flash messages
 
-# --- MOCK MODELS & ENCODERS ---
-class MockEncoder:
-    def __init__(self, classes):
-        self.classes_ = np.array(classes)
+# Real Backend Artifacts
+BASE_DIR = Path(__file__).resolve().parent
+MODEL_DIR = BASE_DIR / "models"
 
-    def transform(self, values):
-        return [np.where(self.classes_ == val)[0][0] if val in self.classes_ else 0 for val in values]
+MODEL_PATH = MODEL_DIR / "xgb_crop_model.pkl"
+CROP_ENCODER_PATH = MODEL_DIR / "Crop_encoder.pkl"
+SEASON_ENCODER_PATH = MODEL_DIR / "Season_encoder.pkl"
+STATE_ENCODER_PATH = MODEL_DIR / "State_encoder.pkl"
 
-# Initializing encoders with your data
-crop_enc = MockEncoder(["Rice", "Wheat", "Maize", "Cotton", "Sugarcane", "Soybean", "Groundnut", "Barley", "Ragi", "Jowar"])
-season_enc = MockEncoder(["Kharif", "Rabi", "Summer", "Whole Year"])
-state_enc = MockEncoder(["Andhra Pradesh", "Maharashtra", "Karnataka", "Tamil Nadu", "Uttar Pradesh", "Punjab", "Haryana", "Gujarat", "Rajasthan", "Madhya Pradesh"])
 
-class YieldModel:
-    def predict(self, features):
-        """Simulates an ML model inference"""
-        time.sleep(0.5) # Reduced sleep for better UX
-        return np.random.uniform(10, 100, size=(len(features),))
+def load_artifacts():
+    if not MODEL_PATH.exists():
+        raise FileNotFoundError(f"Missing model file: {MODEL_PATH}")
+    if not CROP_ENCODER_PATH.exists():
+        raise FileNotFoundError(f"Missing encoder file: {CROP_ENCODER_PATH}")
+    if not SEASON_ENCODER_PATH.exists():
+        raise FileNotFoundError(f"Missing encoder file: {SEASON_ENCODER_PATH}")
+    if not STATE_ENCODER_PATH.exists():
+        raise FileNotFoundError(f"Missing encoder file: {STATE_ENCODER_PATH}")
 
-model = YieldModel()
+    loaded_model = joblib.load(MODEL_PATH)
+    loaded_crop_enc = joblib.load(CROP_ENCODER_PATH)
+    loaded_season_enc = joblib.load(SEASON_ENCODER_PATH)
+    loaded_state_enc = joblib.load(STATE_ENCODER_PATH)
+    return loaded_model, loaded_crop_enc, loaded_season_enc, loaded_state_enc
+
+
+model, crop_enc, season_enc, state_enc = load_artifacts()
 
 # --- UTILITIES & VALIDATION ---
 
