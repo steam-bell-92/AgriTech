@@ -392,4 +392,4 @@ A: Ensure the backend server is running correctly and that the /health route is 
 
 ---
 
-**Made with ❤️ by the AgriTech Community — SWoC 2026**
+**Made with ❤️ by the AgriTech Community — Nexus Spring Of Code 2026**
