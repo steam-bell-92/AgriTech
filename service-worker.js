@@ -5,8 +5,7 @@ const ASSETS_TO_CACHE = [
   "/",
   "/index.html",
   "/offline.html",
-  "/styles.css",
-  "/main.js"
+  "/styles.css"
 ];
 
 // Install event
