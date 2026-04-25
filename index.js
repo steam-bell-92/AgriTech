@@ -548,14 +548,17 @@ function renderUserProfile(user) {
   list.innerHTML = '';
   user.transactions.forEach(tx => {
     const li = document.createElement('li');
-    li.style.padding = '0.5rem';
-    li.style.borderBottom = '1px solid var(--border-color)';
+    li.className = 'transaction-item';
     const sign = tx.type === 'sold' ? '+' : '';
     const color = tx.type === 'sold' ? 'var(--accent-color)' : 'var(--text-muted)';
-    li.innerHTML = `<div style="font-size:0.85rem;color:var(--text-muted)">${tx.date}</div>
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:0.25rem;">
-                      <span style="color:var(--text-color);font-size:0.95rem">${tx.item}</span>
-                      <span style="color:${color};font-weight:600;">${sign}₹${Math.abs(tx.amount).toLocaleString()}</span>
+    const icon = tx.type === 'sold' ? '<i class="fas fa-arrow-trend-up"></i>' : '<i class="fas fa-arrow-trend-down"></i>';
+    li.innerHTML = `<div style="font-size:0.85rem;color:var(--text-muted); display:flex; justify-content:space-between;">
+                      <span>${tx.date}</span>
+                      <span style="color:${color};font-size:0.8rem;opacity:0.8">${icon} ${tx.type.charAt(0).toUpperCase() + tx.type.slice(1)}</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:0.35rem;">
+                      <span style="color:var(--text-color);font-size:1.05rem;font-weight:500;">${tx.item}</span>
+                      <span style="color:${color};font-weight:700;font-size:1.1rem;background:rgba(255,255,255,0.05);padding:0.25rem 0.5rem;border-radius:6px;">${sign}₹${Math.abs(tx.amount).toLocaleString()}</span>
                     </div>`;
     list.appendChild(li);
   });
