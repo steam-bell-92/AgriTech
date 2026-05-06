@@ -265,7 +265,7 @@
       </a>
 
       <a href="plantation.html" class="grid-item">
-        <img src="/images/Plantation.avif" alt="Plantation Guidance" loading="lazy" />
+        <img src="images/Plantation.avif" alt="Plantation Guidance" loading="lazy" />
         <div class="grid-item-content">
           <h3>Plantation Guidance</h3>
           <p>Receive expert advice on plantation techniques, crop selection, and sustainable farming methods.</p>
