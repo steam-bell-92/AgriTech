@@ -20,6 +20,7 @@ from spatial_analytics.routes import spatial_bp
 from backend.extensions.cache import cache
 from backend.monitoring.routes import health_bp
 from backend.api import register_api
+from backend.api.v1.model_versioning import model_versioning_bp
 from backend.config import config
 from backend.schemas.loan_schema import LoanRequestSchema
 from backend.celery_app import celery_app, make_celery
@@ -81,6 +82,7 @@ app.register_blueprint(health_bp)
 app.register_blueprint(files_bp)
 app.register_blueprint(spatial_bp)
 app.register_blueprint(ingestion_bp, url_prefix='/api/v1')
+app.register_blueprint(model_versioning_bp)
 app.register_blueprint(irrigation_bp)
 app.register_blueprint(rotation_bp)
 

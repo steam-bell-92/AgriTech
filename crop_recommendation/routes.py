@@ -7,21 +7,57 @@ from auth_utils import token_required, roles_required
 import joblib
 import numpy as np
 import re
+import logging
 from functools import wraps
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from io import BytesIO
 import datetime
 
-crop_bp = Blueprint('crop', __name__, template_folder='templates', static_folder='static')
-
+# Import model versioning system
 try:
-    model = joblib.load('model/rf_model.pkl')
-    label_encoder = joblib.load('model/label_encoder.pkl')  # Load encoder
-except (FileNotFoundError, IndexError):
-    model = None
-    label_encoder = None
-    print("Warning: Crop models not found. Prediction disabled.")
+    from backend.ml_models import get_model_manager
+    model_manager = get_model_manager()
+    VERSIONING_ENABLED = True
+except ImportError:
+    VERSIONING_ENABLED = False
+    model_manager = None
+    print("Warning: Model versioning system not available. Falling back to legacy mode.")
+
+crop_bp = Blueprint('crop', __name__, template_folder='templates', static_folder='static')
+logger = logging.getLogger(__name__)
+
+# Load model using versioning system if available, otherwise fallback to legacy mode
+def load_crop_models():
+    """Load crop recommendation model and label encoder"""
+    if VERSIONING_ENABLED and model_manager:
+        try:
+            # Load from versioning system
+            model, artifacts = model_manager.load_model(
+                'crop_recommendation',
+                return_artifacts=True
+            )
+            label_encoder = artifacts.get('label_encoder')
+            active_version = model_manager.get_active_version('crop_recommendation')
+            logger.info(f"Loaded crop_recommendation model version: {active_version}")
+            return model, label_encoder, active_version
+        except Exception as e:
+            logger.warning(f"Failed to load model from versioning system: {str(e)}")
+            logger.info("Falling back to legacy model loading...")
+    
+    # Fallback to legacy mode
+    try:
+        model = joblib.load('model/rf_model.pkl')
+        label_encoder = joblib.load('model/label_encoder.pkl')
+        logger.info("Loaded models from legacy location")
+        return model, label_encoder, "legacy"
+    except (FileNotFoundError, IndexError):
+        logger.error("Warning: Crop models not found. Prediction disabled.")
+        return None, None, None
+
+# Load models at startup
+model, label_encoder, active_model_version = load_crop_models()
+logger.info(f"Crop recommendation system initialized. Active model version: {active_model_version}")
 
 # Input validation helper functions
 def validate_required_fields(required_fields):
@@ -105,14 +141,25 @@ def predict():
             prediction_num = model.predict([data])[0]
             prediction_label = label_encoder.inverse_transform([prediction_num])[0]
             
+            # Log prediction with model version
+            logger.info(
+                f"Prediction made using model version: {active_model_version}, "
+                f"Predicted crop: {prediction_label}"
+            )
+            
             # Handle the Form Submission (POST)
-            return render_template('result.html', crop=prediction_label, params=input_params)
+            return render_template(
+                'result.html', 
+                crop=prediction_label, 
+                params=input_params,
+                model_version=active_model_version
+            )
             
         except ValueError as e:
             # Render the form again with the error message visible
             return render_template('index.html', error=str(e))
         except Exception as e:
-            crop_bp.logger.error(f"Prediction error: {str(e)}")
+            logger.error(f"Prediction error: {str(e)}")
             return jsonify({'error': 'Prediction failed'}), 500
 
 # PDF download route
